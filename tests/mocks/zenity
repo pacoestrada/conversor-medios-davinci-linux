@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+
+set -u
+
+for argumento in "$@"; do
+    if [[ "$argumento" == "--file-selection" ]]; then
+        if [[ "${MOCK_ZENITY_CANCEL:-0}" == "1" ]]; then
+            exit 1
+        fi
+
+        printf '%s\n' "$MOCK_MEDIA_DIR"
+        exit 0
+    fi
+
+    if [[ "$argumento" == "--progress" ]]; then
+        cat > "${MOCK_PROGRESS_LOG:-/dev/null}"
+        exit 0
+    fi
+done
+
+printf '%s\n' "$*" >> "${MOCK_DIALOG_LOG:-/dev/null}"
