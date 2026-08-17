@@ -2,9 +2,12 @@
 
 Script gráfico para convertir en lote archivos MP4 a contenedor MOV sin recodificar el vídeo. Está pensado para facilitar el trabajo con material de cámara en DaVinci Resolve sobre Linux.
 
+La versión 1.3 incorpora un selector gráfico de carpetas. El script puede guardarse donde resulte más cómodo y, al ejecutarlo, permite navegar por el árbol de directorios para elegir dónde están los vídeos.
+
 ## Qué hace
 
-- Busca todos los archivos `.mp4` de la carpeta donde está el script y de sus subcarpetas.
+- Permite elegir gráficamente la carpeta que contiene los vídeos.
+- Busca todos los archivos `.mp4` de la carpeta seleccionada y de sus subcarpetas.
 - Genera cada `.mov` junto al archivo original.
 - Copia el vídeo sin pérdida ni recodificación (`-c:v copy`).
 - Convierte el audio a PCM de 24 bits (`pcm_s24le`), compatible con flujos de edición.
@@ -27,7 +30,7 @@ sudo apt install ffmpeg zenity
 
 ## Uso
 
-1. Descarga `convertir_medios.sh` y colócalo dentro de la carpeta que contiene los vídeos.
+1. Descarga `convertir_medios.sh` y guárdalo donde quieras, por ejemplo en tu carpeta de aplicaciones o herramientas.
 2. Dale permiso de ejecución:
 
    ```bash
@@ -40,7 +43,9 @@ sudo apt install ffmpeg zenity
    ./convertir_medios.sh
    ```
 
-No hay que escribir ni pegar ninguna ruta. El programa toma automáticamente como origen su propia carpeta.
+4. En la ventana que aparece, navega por el árbol de directorios y selecciona la carpeta que contiene los vídeos.
+
+No hay que escribir ni pegar ninguna ruta. El programa recuerda como punto de partida la carpeta donde está guardado el script, pero permite seleccionar cualquier otra. Si se cancela la selección, termina sin realizar cambios.
 
 ## Conversión utilizada
 
@@ -55,6 +60,14 @@ El vídeo permanece idéntico al original. Solo se cambia el contenedor y se tra
 ## Archivos problemáticos
 
 Un MP4 extremadamente pequeño o incompleto puede no contener ninguna pista utilizable. En ese caso FFmpeg puede mostrar `Output file does not contain any stream`. El script continúa con los demás vídeos, informa del archivo problemático y borra la salida incompleta.
+
+## Pruebas
+
+La prueba automática de la selección de carpeta y la conversión por lotes puede ejecutarse desde la raíz del proyecto:
+
+```bash
+./tests/test_v1_3.sh
+```
 
 ## Licencia
 

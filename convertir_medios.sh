@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-# Convierte a MOV todos los MP4 que haya en la carpeta del propio script
-# (incluidas sus subcarpetas). No es necesario indicar ninguna ruta.
+# Permite elegir gráficamente una carpeta y convierte a MOV todos los MP4
+# que encuentre en ella y en sus subcarpetas.
 
 set -u
 
@@ -31,13 +31,31 @@ if ! command -v ffmpeg >/dev/null 2>&1; then
     exit 1
 fi
 
+CARPETA_SELECCIONADA="$(
+    zenity --file-selection \
+        --directory \
+        --title="Selecciona la carpeta que contiene los vídeos" \
+        --filename="$CARPETA_SCRIPT/"
+)" || exit 0
+
+if [[ ! -d "$CARPETA_SELECCIONADA" || ! -r "$CARPETA_SELECCIONADA" ]]; then
+    zenity --error \
+        --title="$TITULO" \
+        --width=450 \
+        --text="No se puede leer la carpeta seleccionada."
+    exit 1
+fi
+
+# Normaliza la ruta elegida y elimina posibles barras finales.
+CARPETA_ORIGEN="$(cd -- "$CARPETA_SELECCIONADA" && pwd -P)"
+
 # Obtiene los nombres de forma segura, incluso si contienen espacios.
 mapfile -d '' ARCHIVOS_MP4 < <(
-    find "$CARPETA_SCRIPT" -type f -iname '*.mp4' -print0
+    find "$CARPETA_ORIGEN" -type f -iname '*.mp4' -print0
 )
 
 if (( ${#ARCHIVOS_MP4[@]} == 0 )); then
-    printf -v mensaje 'No se han encontrado archivos MP4 en:\n%s' "$CARPETA_SCRIPT"
+    printf -v mensaje 'No se han encontrado archivos MP4 en:\n%s' "$CARPETA_ORIGEN"
     zenity --info --title="$TITULO" --width=430 --text="$mensaje"
     exit 0
 fi
@@ -81,7 +99,7 @@ trap limpiar EXIT
 
     for video in "${PENDIENTES[@]}"; do
         salida="${video%.*}.mov"
-        nombre_relativo="${video#"$CARPETA_SCRIPT"/}"
+        nombre_relativo="${video#"$CARPETA_ORIGEN"/}"
         # Zenity interpreta las líneas que empiezan por # como mensajes.
         nombre_mostrado="${nombre_relativo//$'\n'/ }"
 
