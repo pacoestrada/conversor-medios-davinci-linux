@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+set -u
+
+for ultimo_argumento in "$@"; do :; done
+
+printf '%s\n' "$*" >> "$MOCK_FFMPEG_LOG"
+touch -- "$ultimo_argumento"
