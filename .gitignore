@@ -5,3 +5,5 @@
 *.avi
 *.mxf
 *.log
+/build/
+/dist/

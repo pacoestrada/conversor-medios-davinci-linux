@@ -1,4 +1,40 @@
-# Conversor de medios para DaVinci Resolve en Linux
+# Conversor MP4 a MOV para Linux
+
+> La versión 2 ya no usa marcas de terceros en el nombre de la aplicación. El
+> contenido que sigue documenta la versión 1.3; consulta primero la sección v2.
+
+## Versión 2 instalable
+
+La aplicación permite elegir uno o varios MP4 o una carpeta completa (incluidas
+sus subcarpetas). Intenta primero un **remux puro**, copiando vídeo, audio y demás
+pistas sin recodificación. Si el audio no es compatible con MOV, conserva el vídeo
+y utiliza automáticamente el modo PCM de 24 bits de la versión anterior.
+
+Incluye progreso gráfico, escritura temporal segura, omisión de MOV existentes y
+un resumen final de convertidos, omitidos y fallidos con una explicación útil de
+cada error.
+
+Para construir el paquete Debian:
+
+```bash
+chmod +x packaging/build-deb.sh
+./packaging/build-deb.sh
+```
+
+El resultado queda en `dist/conversor-mp4-mov_2.0.0_all.deb`. Se puede instalar
+con `sudo apt install ./dist/conversor-mp4-mov_2.0.0_all.deb`.
+
+El constructor usa automáticamente `conversor_mp4_a_mov_en_linux.png` cuando ese
+archivo está en la raíz. Mientras no esté disponible instala el SVG provisional
+de `data/`. El futuro empaquetado RPM queda separado en `packaging/rpm/`.
+
+Prueba automática de la versión 2:
+
+```bash
+bash tests/test_v2.sh
+```
+
+## Documentación histórica de la versión 1.3
 
 Script gráfico para convertir en lote archivos MP4 a contenedor MOV sin recodificar el vídeo. Está pensado para facilitar el trabajo con material de cámara en DaVinci Resolve sobre Linux.
 
