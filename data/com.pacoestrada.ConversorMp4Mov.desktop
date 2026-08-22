@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Conversor MP4 a MOV
+Comment=Convierte vídeos MP4 a MOV sin pérdida cuando es posible
+Exec=conversor-medios
+Icon=com.pacoestrada.ConversorMp4Mov
+Terminal=false
+Categories=AudioVideo;Video;
+Keywords=MP4;MOV;FFmpeg;vídeo;conversor;
+StartupNotify=true
