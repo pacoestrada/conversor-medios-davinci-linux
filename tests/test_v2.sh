@@ -4,6 +4,8 @@ set -euo pipefail
 RAIZ="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)"
 TEMP="$(mktemp -d)"
 trap 'rm -rf -- "$TEMP"' EXIT
+# Los archivos descargados como ZIP pueden perder el bit ejecutable.
+chmod +x "$RAIZ"/tests/mocks/*
 MEDIOS="$TEMP/medios de prueba"
 mkdir -p -- "$MEDIOS/subcarpeta"
 touch -- "$MEDIOS/video uno.MP4" "$MEDIOS/subcarpeta/video dos.mp4" "$MEDIOS/subcarpeta/video dos.mov"
