@@ -5,4 +5,8 @@ set -u
 for ultimo_argumento in "$@"; do :; done
 
 printf '%s\n' "$*" >> "$MOCK_FFMPEG_LOG"
+if [[ "${MOCK_FFMPEG_FAIL:-0}" == "1" ]]; then
+    printf 'moov atom not found: Invalid data found when processing input\n' >&2
+    exit 1
+fi
 touch -- "$ultimo_argumento"
