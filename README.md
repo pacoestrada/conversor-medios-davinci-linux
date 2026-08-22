@@ -21,12 +21,12 @@ chmod +x packaging/build-deb.sh
 ./packaging/build-deb.sh
 ```
 
-El resultado queda en `dist/conversor-mp4-mov_2.0.0_all.deb`. Se puede instalar
-con `sudo apt install ./dist/conversor-mp4-mov_2.0.0_all.deb`.
+El resultado queda en `dist/conversor-mp4-mov_2.0.1_all.deb`. Se puede instalar
+con `sudo apt install ./dist/conversor-mp4-mov_2.0.1_all.deb`.
 
-El constructor usa automáticamente `conversor_mp4_a_mov_en_linux.png` cuando ese
-archivo está en la raíz. Mientras no esté disponible instala el SVG provisional
-de `data/`. El futuro empaquetado RPM queda separado en `packaging/rpm/`.
+El paquete instala el icono oficial en tamaños de 48, 64, 128, 256 y 512 píxeles,
+siguiendo la estructura estándar de iconos de Linux. El futuro empaquetado RPM
+queda separado en `packaging/rpm/`.
 
 Prueba automática de la versión 2:
 
