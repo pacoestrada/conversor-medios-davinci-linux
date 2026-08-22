@@ -5,7 +5,7 @@
 
 set -u
 
-TITULO="Conversión de archivos multimedia"
+TITULO="Conversor de medios para DaVinci v1.3"
 CARPETA_SCRIPT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 
 mostrar_error_sin_zenity() {
