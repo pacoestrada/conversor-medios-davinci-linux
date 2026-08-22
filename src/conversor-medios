@@ -1,0 +1,114 @@
+#!/usr/bin/env bash
+set -u
+readonly TITULO="Conversor MP4 a MOV"
+readonly VERSION="2.0.0"
+
+mostrar_sin_gui() {
+    local mensaje="$1"
+    if command -v xmessage >/dev/null 2>&1; then xmessage -center "$mensaje"
+    elif command -v notify-send >/dev/null 2>&1; then notify-send -u critical "$TITULO" "$mensaje"
+    else printf '%s\n' "$mensaje" >&2; fi
+}
+
+if ! command -v zenity >/dev/null 2>&1; then
+    mostrar_sin_gui "No se encuentra Zenity. Instálalo desde el gestor de software."
+    exit 1
+fi
+for orden in ffmpeg ffprobe; do
+    if ! command -v "$orden" >/dev/null 2>&1; then
+        zenity --error --title="$TITULO" --width=470 --text="No se encuentra FFmpeg. Instálalo desde el gestor de software o con: sudo apt install ffmpeg"
+        exit 1
+    fi
+done
+
+MODO="$(zenity --list --radiolist --title="$TITULO $VERSION" --width=560 --height=290 \
+    --text="¿Qué quieres convertir?" --column="" --column="Selección" \
+    TRUE "Una carpeta (incluye subcarpetas)" FALSE "Uno o varios archivos MP4")" || exit 0
+
+ARCHIVOS_MP4=()
+if [[ "$MODO" == "Una carpeta (incluye subcarpetas)" ]]; then
+    CARPETA_ORIGEN="$(zenity --file-selection --directory --title="Selecciona la carpeta que contiene los MP4" --filename="${HOME:-/}/")" || exit 0
+    if [[ ! -d "$CARPETA_ORIGEN" || ! -r "$CARPETA_ORIGEN" ]]; then
+        zenity --error --title="$TITULO" --text="No se puede leer la carpeta seleccionada."
+        exit 1
+    fi
+    CARPETA_ORIGEN="$(cd -- "$CARPETA_ORIGEN" && pwd -P)"
+    mapfile -d '' ARCHIVOS_MP4 < <(find "$CARPETA_ORIGEN" -type f -iname '*.mp4' -print0 | sort -z)
+else
+    SELECCION="$(zenity --file-selection --multiple --separator=$'\n' --title="Selecciona uno o varios archivos MP4" \
+        --file-filter="Vídeos MP4 | *.mp4 *.MP4" --file-filter="Todos los archivos | *")" || exit 0
+    while IFS= read -r archivo; do
+        [[ -n "$archivo" && -f "$archivo" && "${archivo,,}" == *.mp4 ]] && ARCHIVOS_MP4+=("$archivo")
+    done <<< "$SELECCION"
+fi
+
+if (( ${#ARCHIVOS_MP4[@]} == 0 )); then
+    zenity --info --title="$TITULO" --width=450 --text="No se han encontrado archivos MP4 válidos."
+    exit 0
+fi
+
+PENDIENTES=(); OMITIDOS=0
+for video in "${ARCHIVOS_MP4[@]}"; do
+    if [[ -e "${video%.*}.mov" ]]; then ((OMITIDOS += 1)); else PENDIENTES+=("$video"); fi
+done
+TOTAL=${#PENDIENTES[@]}
+if (( TOTAL == 0 )); then
+    zenity --info --title="$TITULO" --width=470 --text="No hay nada pendiente.\n\nOmitidos porque su MOV ya existe: $OMITIDOS"
+    exit 0
+fi
+
+TEMPORAL="$(mktemp -d)"
+RESULTADO="$TEMPORAL/resultado"; ERRORES_TXT="$TEMPORAL/errores"
+trap 'rm -rf -- "$TEMPORAL"' EXIT
+
+explicar_error() {
+    local registro="$1" detalle
+    detalle="$(grep -Eiv '^(ffmpeg version|  built with|  configuration:|  lib[a-z]+)' "$registro" | tail -n 4 | tr '\n' ' ' | sed 's/[[:space:]]\+/ /g')"
+    if grep -qiE 'invalid data|moov atom not found|could not find codec parameters' "$registro"; then printf 'El MP4 parece incompleto o dañado. %s' "$detalle"
+    elif grep -qiE 'permission denied|read-only file system' "$registro"; then printf 'No hay permiso para leer el origen o escribir el MOV. %s' "$detalle"
+    elif grep -qiE 'no space left on device' "$registro"; then printf 'No queda espacio libre en el disco de destino. %s' "$detalle"
+    elif grep -qiE 'does not contain any stream|matches no streams' "$registro"; then printf 'El archivo no contiene pistas de vídeo o audio utilizables. %s' "$detalle"
+    else printf 'FFmpeg no pudo completar la conversión. %s' "${detalle:-Sin detalle adicional.}"; fi
+}
+
+(
+    correctos=0; fallidos=0; indice=0; : > "$ERRORES_TXT"; echo 0
+    for video in "${PENDIENTES[@]}"; do
+        salida="${video%.*}.mov"; parcial="$TEMPORAL/salida-$indice.mov"
+        log_copia="$TEMPORAL/copia-$indice.log"; log_compat="$TEMPORAL/compat-$indice.log"
+        nombre_mostrado="$(basename -- "$video")"; nombre_mostrado="${nombre_mostrado//$'\n'/ }"
+        echo "$((indice * 100 / TOTAL))"
+        printf '# Procesando %d de %d: %s\n' "$((indice + 1))" "$TOTAL" "$nombre_mostrado"
+
+        if ffmpeg -nostdin -y -hide_banner -loglevel error -i "$video" -map 0 -c copy -movflags +faststart "$parcial" 2>"$log_copia"; then
+            if mv -- "$parcial" "$salida"; then ((correctos += 1)); else
+                printf '%s\tNo se pudo guardar el MOV junto al archivo original.\n' "$video" >> "$ERRORES_TXT"; ((fallidos += 1))
+            fi
+        else
+            rm -f -- "$parcial"
+            if ffmpeg -nostdin -y -hide_banner -loglevel error -i "$video" -map '0:v?' -map '0:a?' \
+                -c:v copy -c:a pcm_s24le -map_metadata 0 -movflags +faststart "$parcial" 2>"$log_compat" && mv -- "$parcial" "$salida"; then
+                ((correctos += 1))
+            else
+                rm -f -- "$parcial"; motivo="$(explicar_error "$log_compat")"
+                printf '%s\t%s\n' "$video" "$motivo" >> "$ERRORES_TXT"; ((fallidos += 1))
+            fi
+        fi
+        ((indice += 1)); echo "$((indice * 100 / TOTAL))"
+    done
+    printf '%d %d\n' "$correctos" "$fallidos" > "$RESULTADO"
+) | zenity --progress --title="$TITULO" --width=580 --text="Preparando la conversión…" --percentage=0 --auto-close --no-cancel
+
+if [[ ! -s "$RESULTADO" ]]; then
+    zenity --error --title="$TITULO" --width=470 --text="La conversión se interrumpió inesperadamente."
+    exit 1
+fi
+read -r CORRECTOS FALLIDOS < "$RESULTADO"
+resumen="Convertidos: $CORRECTOS\nOmitidos: $OMITIDOS\nFallidos: $FALLIDOS"
+if (( FALLIDOS == 0 )); then
+    zenity --info --title="$TITULO" --width=470 --text="Conversión completada.\n\n$resumen"
+else
+    detalle="$(awk -F '\t' '{printf "• %s\n  %s\n", $1, $2}' "$ERRORES_TXT")"
+    zenity --warning --title="$TITULO" --width=720 --height=440 --text="Conversión terminada con incidencias.\n\n$resumen\n\n$detalle"
+    exit 1
+fi
