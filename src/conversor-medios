@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -u
 readonly TITULO="Conversor MP4 a MOV"
-readonly VERSION="2.0.0"
+readonly VERSION="2.0.1"
 
 mostrar_sin_gui() {
     local mensaje="$1"
