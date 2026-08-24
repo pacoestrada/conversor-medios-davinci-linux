@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -u
 readonly TITULO="Conversor MP4 a MOV"
-readonly VERSION="2.0.1"
+readonly VERSION="2.0.2"
 
 mostrar_sin_gui() {
     local mensaje="$1"
@@ -14,6 +14,16 @@ if ! command -v zenity >/dev/null 2>&1; then
     mostrar_sin_gui "No se encuentra Zenity. Instálalo desde el gestor de software."
     exit 1
 fi
+
+# Presentación breve de la aplicación. Se cierra sola o al pulsar Aceptar.
+zenity --info \
+    --title="$TITULO $VERSION" \
+    --icon-name="com.pacoestrada.ConversorMp4Mov" \
+    --width=460 \
+    --timeout=5 \
+    --text="<big><b>Conversor MP4 a MOV</b></big>\n\nConversión de medios sencilla para Linux\n\n<b>Creado por Paco Estrada</b>" \
+    2>/dev/null || true
+
 for orden in ffmpeg ffprobe; do
     if ! command -v "$orden" >/dev/null 2>&1; then
         zenity --error --title="$TITULO" --width=470 --text="No se encuentra FFmpeg. Instálalo desde el gestor de software o con: sudo apt install ffmpeg"
