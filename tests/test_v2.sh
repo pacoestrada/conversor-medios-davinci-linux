@@ -17,6 +17,7 @@ export MOCK_DIALOG_LOG="$TEMP/dialogos.log"
 PATH="$RAIZ/tests/mocks:$PATH" bash "$RAIZ/convertir_medios.sh"
 
 [[ -f "$MEDIOS/video uno.mov" ]]
+grep -q 'Creado por Paco Estrada' "$MOCK_DIALOG_LOG"
 [[ "$(wc -l < "$MOCK_FFMPEG_LOG")" -eq 1 ]]
 grep -q -- '-map 0 -c copy' "$MOCK_FFMPEG_LOG"
 grep -q '100' "$MOCK_PROGRESS_LOG"
