@@ -15,7 +15,7 @@ Descarga la última versión desde la página de
 
 El archivo que necesitas es:
 
-`conversor-mp4-mov_2.0.1_all.deb`
+`conversor-mp4-mov_2.0.2_all.deb`
 
 ### Instalación gráfica
 
@@ -26,7 +26,7 @@ Haz doble clic sobre el archivo `.deb` descargado y pulsa **Instalar**.
 Abre una terminal en la carpeta donde lo has descargado y ejecuta:
 
 ```bash
-sudo apt install ./conversor-mp4-mov_2.0.1_all.deb
+sudo apt install ./conversor-mp4-mov_2.0.2_all.deb
 ```
 
 El instalador añadirá automáticamente las dependencias necesarias.
