@@ -1,5 +1,5 @@
 Package: conversor-mp4-mov
-Version: 2.0.2
+Version: 2.1.0
 Section: video
 Priority: optional
 Architecture: all
@@ -7,5 +7,5 @@ Depends: bash, ffmpeg, zenity
 Maintainer: Paco Estrada
 Homepage: https://github.com/pacoestrada/conversor-medios-davinci-linux
 Description: Conversor gráfico de MP4 a MOV
- Convierte uno o varios MP4, o una carpeta completa, mediante remux sin
- recodificación cuando el contenido es compatible con el contenedor MOV.
+ Copia el vídeo sin recodificar y convierte el audio a PCM de 24 bits.
+ Verifica las pistas y el contenido del vídeo antes de anunciar éxito.

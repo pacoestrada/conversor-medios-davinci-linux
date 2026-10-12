@@ -4,9 +4,17 @@ Aplicación gráfica para convertir archivos MP4 a MOV de forma sencilla y sin
 perder calidad.
 
 Permite seleccionar uno o varios archivos, o una carpeta completa con sus
-subcarpetas. Intenta copiar vídeo y audio sin recodificarlos. Cuando el audio no
-es compatible con MOV, mantiene el vídeo intacto y convierte únicamente el audio
-a PCM de 24 bits.
+subcarpetas. Copia el vídeo sin recodificar y convierte todas las pistas de audio
+a PCM de 24 bits a 48 kHz, compatible con DaVinci Resolve en Linux.
+
+Antes de anunciar éxito, comprueba las pistas, los canales y el formato PCM,
+lee todo el audio para detectar errores y compara la huella del vídeo comprimido
+con el original. Una señal verde indica conversión verificada; una señal roja
+indica fallos y muestra el motivo. Si el origen no tiene audio, no lo inventa.
+La señal verde confirma estas comprobaciones; no sustituye una prueba en Resolve.
+
+El vídeo HEVC/H.264 se conserva: su importación depende de la edición de Resolve
+y del hardware. Esta versión no recodifica vídeo automáticamente.
 
 ## Descargar e instalar
 
@@ -15,7 +23,7 @@ Descarga la última versión desde la página de
 
 El archivo que necesitas es:
 
-`conversor-mp4-mov_2.0.2_all.deb`
+`conversor-mp4-mov_2.1.0_all.deb`
 
 ### Instalación gráfica
 
@@ -26,7 +34,7 @@ Haz doble clic sobre el archivo `.deb` descargado y pulsa **Instalar**.
 Abre una terminal en la carpeta donde lo has descargado y ejecuta:
 
 ```bash
-sudo apt install ./conversor-mp4-mov_2.0.2_all.deb
+sudo apt install ./conversor-mp4-mov_2.1.0_all.deb
 ```
 
 El instalador añadirá automáticamente las dependencias necesarias.
@@ -39,15 +47,18 @@ El instalador añadirá automáticamente las dependencias necesarias.
 4. Revisa el resumen de archivos convertidos, omitidos y fallidos.
 
 Los archivos MOV se guardan junto a sus MP4 originales. Si un MOV ya existe, la
-aplicación lo omite y no lo sobrescribe.
+aplicación lo omite y no lo sobrescribe. Los omitidos no se validan.
+Para repetir un MP4 convertido con la versión anterior, mueve o renombra su MOV
+antiguo antes de convertir; así se conserva la copia anterior.
 
 ## Funciones principales
 
 - Selección gráfica de archivos o carpetas completas.
 - Búsqueda de MP4 en todas las subcarpetas.
-- Conversión sin recodificar vídeo ni audio cuando es posible.
+- Audio PCM de 24 bits a 48 kHz en todos los archivos con audio.
 - Vídeo siempre intacto, incluso cuando el audio necesita conversión.
 - Indicador gráfico de progreso.
+- Señal verde tras verificar la salida o roja si hay fallos.
 - Resumen final de convertidos, omitidos y fallidos.
 - Explicación útil para cada archivo que no se haya podido convertir.
 - Eliminación automática de salidas incompletas.

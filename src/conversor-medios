@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -u
 readonly TITULO="Conversor MP4 a MOV"
-readonly VERSION="2.0.2"
+readonly VERSION="2.1.0"
 
 mostrar_sin_gui() {
     local mensaje="$1"
@@ -81,29 +81,83 @@ explicar_error() {
     else printf 'FFmpeg no pudo completar la conversión. %s' "${detalle:-Sin detalle adicional.}"; fi
 }
 
+validar_salida() {
+    local origen="$1" destino="$2" video_origen video_destino audio_origen audio_destino pista huella_origen huella_destino duraciones_origen duraciones_destino
+    video_origen="$(ffprobe -v error -select_streams v:0 -show_entries stream=codec_name,width,height,r_frame_rate -of csv=p=0 "$origen")" || return 1
+    video_destino="$(ffprobe -v error -select_streams v:0 -show_entries stream=codec_name,width,height,r_frame_rate -of csv=p=0 "$destino")" || return 1
+    if [[ -z "$video_origen" || "$video_origen" != "$video_destino" ]]; then
+        echo 'La pista de vídeo falta o sus propiedades han cambiado.' >&2; return 1
+    fi
+    # Comparar el contenido comprimido, sin decodificar ni recodificar el vídeo.
+    huella_origen="$(ffmpeg -nostdin -v error -i "$origen" -map 0:v:0 -c:v copy -f hash -)" || return 1
+    huella_destino="$(ffmpeg -nostdin -v error -i "$destino" -map 0:v:0 -c:v copy -f hash -)" || return 1
+    if [[ -z "$huella_origen" || "$huella_origen" != "$huella_destino" ]]; then
+        echo 'El contenido del vídeo no coincide con el original.' >&2; return 1
+    fi
+    audio_origen="$(ffprobe -v error -select_streams a -show_entries stream=channels -of csv=p=0 "$origen")" || return 1
+    audio_destino="$(ffprobe -v error -select_streams a -show_entries stream=channels -of csv=p=0 "$destino")" || return 1
+    if [[ "$audio_origen" != "$audio_destino" ]]; then
+        echo 'Faltan pistas de audio o ha cambiado su número de canales.' >&2; return 1
+    fi
+    if [[ -n "$audio_origen" ]]; then
+        pista="$(ffprobe -v error -select_streams a -show_entries stream=codec_name,sample_rate -of csv=p=0 "$destino")" || return 1
+        while IFS= read -r linea; do
+            if [[ "$linea" != 'pcm_s24le,48000' ]]; then
+                echo 'El audio de salida no es PCM de 24 bits a 48 kHz.' >&2; return 1
+            fi
+        done <<< "$pista"
+        duraciones_origen="$(ffprobe -v error -select_streams a -show_entries stream=duration -of csv=p=0 "$origen")" || return 1
+        duraciones_destino="$(ffprobe -v error -select_streams a -show_entries stream=duration -of csv=p=0 "$destino")" || return 1
+        if ! paste <(printf '%s\n' "$duraciones_origen") <(printf '%s\n' "$duraciones_destino") | awk '
+            NF != 2 || $1 !~ /^[0-9]+([.][0-9]+)?$/ || $2 !~ /^[0-9]+([.][0-9]+)?$/ { fallo=1; next }
+            $1 <= 0 || $2 <= 0 || $1-$2 > 0.1 || $2-$1 > 0.1 { fallo=1 }
+            END { exit fallo }'; then
+            echo 'La duración del audio no coincide con el original o está vacía.' >&2; return 1
+        fi
+        ffmpeg -nostdin -v error -xerror -i "$destino" -map 0:a -f null - || return 1
+    fi
+}
+
 (
+    parcial=""
+    trap '[[ -z "$parcial" ]] || rm -f -- "$parcial"' EXIT
     correctos=0; fallidos=0; indice=0; : > "$ERRORES_TXT"; echo 0
     for video in "${PENDIENTES[@]}"; do
-        salida="${video%.*}.mov"; parcial="$TEMPORAL/salida-$indice.mov"
-        log_copia="$TEMPORAL/copia-$indice.log"; log_compat="$TEMPORAL/compat-$indice.log"
+        salida="${video%.*}.mov"
+        if ! parcial="$(mktemp --tmpdir="$(dirname -- "$video")" .conversor-XXXXXXXX.mov)"; then
+            printf '%s\tNo se pudo crear la salida temporal junto al MP4. Comprueba permisos y espacio libre.\n' "$video" >> "$ERRORES_TXT"
+            ((fallidos += 1)); ((indice += 1)); echo "$((indice * 100 / TOTAL))"
+            continue
+        fi
+        log_compat="$TEMPORAL/compat-$indice.log"
         nombre_mostrado="$(basename -- "$video")"; nombre_mostrado="${nombre_mostrado//$'\n'/ }"
         echo "$((indice * 100 / TOTAL))"
         printf '# Procesando %d de %d: %s\n' "$((indice + 1))" "$TOTAL" "$nombre_mostrado"
 
-        if ffmpeg -nostdin -y -hide_banner -loglevel error -i "$video" -map 0 -c copy -movflags +faststart "$parcial" 2>"$log_copia"; then
-            if mv -- "$parcial" "$salida"; then ((correctos += 1)); else
-                printf '%s\tNo se pudo guardar el MOV junto al archivo original.\n' "$video" >> "$ERRORES_TXT"; ((fallidos += 1))
+        log_validacion="$TEMPORAL/validacion-$indice.log"
+        if ffmpeg -nostdin -y -hide_banner -loglevel error -i "$video" \
+            -map 0:v:0 -map '0:a?' -c:v copy -c:a pcm_s24le -ar 48000 \
+            -map_metadata 0 -movflags +faststart "$parcial" 2>"$log_compat"; then
+            printf '# Comprobando vídeo y audio: %s\n' "$nombre_mostrado"
+            if validar_salida "$video" "$parcial" 2>"$log_validacion"; then
+                # No sobrescribir un destino creado mientras se convertía.
+                if mv -n -- "$parcial" "$salida" 2>"$log_validacion" && [[ ! -e "$parcial" ]]; then
+                    ((correctos += 1))
+                else
+                    printf '%s\tNo se pudo guardar el MOV; puede existir ya o faltar permisos.\n' "$video" >> "$ERRORES_TXT"
+                    ((fallidos += 1))
+                fi
+            else
+                motivo="$(cat -- "$log_validacion")"
+                printf '%s\t%s\n' "$video" "${motivo:-No se pudieron verificar las pistas de salida.}" >> "$ERRORES_TXT"
+                ((fallidos += 1))
             fi
         else
-            rm -f -- "$parcial"
-            if ffmpeg -nostdin -y -hide_banner -loglevel error -i "$video" -map '0:v?' -map '0:a?' \
-                -c:v copy -c:a pcm_s24le -map_metadata 0 -movflags +faststart "$parcial" 2>"$log_compat" && mv -- "$parcial" "$salida"; then
-                ((correctos += 1))
-            else
-                rm -f -- "$parcial"; motivo="$(explicar_error "$log_compat")"
-                printf '%s\t%s\n' "$video" "$motivo" >> "$ERRORES_TXT"; ((fallidos += 1))
-            fi
+            motivo="$(explicar_error "$log_compat")"
+            printf '%s\t%s\n' "$video" "$motivo" >> "$ERRORES_TXT"
+            ((fallidos += 1))
         fi
+        rm -f -- "$parcial"
         ((indice += 1)); echo "$((indice * 100 / TOTAL))"
     done
     printf '%d %d\n' "$correctos" "$fallidos" > "$RESULTADO"
@@ -116,9 +170,10 @@ fi
 read -r CORRECTOS FALLIDOS < "$RESULTADO"
 resumen="Convertidos: $CORRECTOS\nOmitidos: $OMITIDOS\nFallidos: $FALLIDOS"
 if (( FALLIDOS == 0 )); then
-    zenity --info --title="$TITULO" --width=470 --text="Conversión completada.\n\n$resumen"
+    zenity --info --title="$TITULO" --width=470 --text="<span foreground='#16803c'><b>● Conversión correcta y verificada</b></span>\n\n$resumen\n\nVídeo intacto. Audio PCM de 24 bits a 48 kHz cuando el original contiene audio. Los omitidos no se han comprobado."
 else
     detalle="$(awk -F '\t' '{printf "• %s\n  %s\n", $1, $2}' "$ERRORES_TXT")"
-    zenity --warning --title="$TITULO" --width=720 --height=440 --text="Conversión terminada con incidencias.\n\n$resumen\n\n$detalle"
+    detalle="$(printf '%s' "$detalle" | sed 's/\&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g')"
+    zenity --error --title="$TITULO" --width=720 --height=440 --text="<span foreground='#c62828'><b>● Conversión con fallos</b></span>\n\n$resumen\n\n$detalle"
     exit 1
 fi
