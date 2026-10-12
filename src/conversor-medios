@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -u
-readonly TITULO="Conversor MP4 a MOV"
-readonly VERSION="2.1.0"
+readonly TITULO="Conversor de medios · Compilando"
+readonly VERSION="2.2.0"
 
 mostrar_sin_gui() {
     local mensaje="$1"
@@ -15,14 +15,16 @@ if ! command -v zenity >/dev/null 2>&1; then
     exit 1
 fi
 
+if [[ -z "${CONVERSOR_DIRECCION:-}" ]]; then
 # Presentación breve de la aplicación. Se cierra sola o al pulsar Aceptar.
 zenity --info \
     --title="$TITULO $VERSION" \
     --icon-name="com.pacoestrada.ConversorMp4Mov" \
     --width=460 \
     --timeout=5 \
-    --text="<big><b>Conversor MP4 a MOV</b></big>\n\nConversión de medios sencilla para Linux\n\n<b>Creado por Paco Estrada</b>" \
+    --text="<big><b>Conversor de medios · Compilando</b></big>\n\n<span foreground='#2563eb'><b>EDITAR · MOV + PCM</b></span>\n<span foreground='#9333ea'><b>PUBLICAR · MP4 + AAC</b></span>\n\nVídeo sin recodificar · Audio verificado\n\n<b>Creado por Paco Estrada</b>" \
     2>/dev/null || true
+fi
 
 for orden in ffmpeg ffprobe; do
     if ! command -v "$orden" >/dev/null 2>&1; then
@@ -31,39 +33,56 @@ for orden in ffmpeg ffprobe; do
     fi
 done
 
+if [[ "${CONVERSOR_DIRECCION:-}" == publicar ]]; then
+    DIRECCION="Preparar para publicación (MOV → MP4)"
+elif [[ "${CONVERSOR_DIRECCION:-}" == editar ]]; then
+    DIRECCION="Preparar para DaVinci (MP4 → MOV)"
+else
+DIRECCION="$(zenity --list --radiolist --title="$TITULO $VERSION" --width=620 --height=300 \
+    --text="<big><b>Elige tu siguiente paso</b></big>\n<span foreground='#2563eb'>● Edición: MOV con PCM de 24 bits a 48 kHz</span>\n<span foreground='#9333ea'>● Publicación: MP4 con AAC a 256 kb/s</span>\n\nEl vídeo se conserva sin recodificar en ambos modos." \
+    --column="" --column="Conversión" TRUE "Preparar para DaVinci (MP4 → MOV)" FALSE "Preparar para publicación (MOV → MP4)")" || exit 0
+fi
+EXT_ORIGEN=mp4; EXT_DESTINO=mov; AUDIO_CODEC=pcm_s24le
+AUDIO_DESCRIPCION="PCM de 24 bits a 48 kHz"
+if [[ "$DIRECCION" == "Preparar para publicación (MOV → MP4)" ]]; then
+    EXT_ORIGEN=mov; EXT_DESTINO=mp4; AUDIO_CODEC=aac
+    AUDIO_DESCRIPCION="AAC a 256 kb/s y 48 kHz"
+fi
+EXT_MOSTRADA="${EXT_ORIGEN^^}"
+
 MODO="$(zenity --list --radiolist --title="$TITULO $VERSION" --width=560 --height=290 \
     --text="¿Qué quieres convertir?" --column="" --column="Selección" \
-    TRUE "Una carpeta (incluye subcarpetas)" FALSE "Uno o varios archivos MP4")" || exit 0
+    TRUE "Una carpeta (incluye subcarpetas)" FALSE "Uno o varios archivos $EXT_MOSTRADA")" || exit 0
 
-ARCHIVOS_MP4=()
+ARCHIVOS=()
 if [[ "$MODO" == "Una carpeta (incluye subcarpetas)" ]]; then
-    CARPETA_ORIGEN="$(zenity --file-selection --directory --title="Selecciona la carpeta que contiene los MP4" --filename="${HOME:-/}/")" || exit 0
+    CARPETA_ORIGEN="$(zenity --file-selection --directory --title="Selecciona la carpeta que contiene los $EXT_MOSTRADA" --filename="${HOME:-/}/")" || exit 0
     if [[ ! -d "$CARPETA_ORIGEN" || ! -r "$CARPETA_ORIGEN" ]]; then
         zenity --error --title="$TITULO" --text="No se puede leer la carpeta seleccionada."
         exit 1
     fi
     CARPETA_ORIGEN="$(cd -- "$CARPETA_ORIGEN" && pwd -P)"
-    mapfile -d '' ARCHIVOS_MP4 < <(find "$CARPETA_ORIGEN" -type f -iname '*.mp4' -print0 | sort -z)
+    mapfile -d '' ARCHIVOS < <(find "$CARPETA_ORIGEN" -type f -iname "*.$EXT_ORIGEN" -print0 | sort -z)
 else
-    SELECCION="$(zenity --file-selection --multiple --separator=$'\n' --title="Selecciona uno o varios archivos MP4" \
-        --file-filter="Vídeos MP4 | *.mp4 *.MP4" --file-filter="Todos los archivos | *")" || exit 0
+    SELECCION="$(zenity --file-selection --multiple --separator=$'\n' --title="Selecciona uno o varios archivos $EXT_MOSTRADA" \
+        --file-filter="Vídeos $EXT_MOSTRADA | *.$EXT_ORIGEN *.$EXT_MOSTRADA" --file-filter="Todos los archivos | *")" || exit 0
     while IFS= read -r archivo; do
-        [[ -n "$archivo" && -f "$archivo" && "${archivo,,}" == *.mp4 ]] && ARCHIVOS_MP4+=("$archivo")
+        [[ -n "$archivo" && -f "$archivo" && "${archivo,,}" == *.$EXT_ORIGEN ]] && ARCHIVOS+=("$archivo")
     done <<< "$SELECCION"
 fi
 
-if (( ${#ARCHIVOS_MP4[@]} == 0 )); then
-    zenity --info --title="$TITULO" --width=450 --text="No se han encontrado archivos MP4 válidos."
+if (( ${#ARCHIVOS[@]} == 0 )); then
+    zenity --info --title="$TITULO" --width=450 --text="No se han encontrado archivos $EXT_MOSTRADA válidos."
     exit 0
 fi
 
 PENDIENTES=(); OMITIDOS=0
-for video in "${ARCHIVOS_MP4[@]}"; do
-    if [[ -e "${video%.*}.mov" ]]; then ((OMITIDOS += 1)); else PENDIENTES+=("$video"); fi
+for video in "${ARCHIVOS[@]}"; do
+    if [[ -e "${video%.*}.$EXT_DESTINO" ]]; then ((OMITIDOS += 1)); else PENDIENTES+=("$video"); fi
 done
 TOTAL=${#PENDIENTES[@]}
 if (( TOTAL == 0 )); then
-    zenity --info --title="$TITULO" --width=470 --text="No hay nada pendiente.\n\nOmitidos porque su MOV ya existe: $OMITIDOS"
+    zenity --info --title="$TITULO" --width=470 --text="No hay nada pendiente.\n\nOmitidos porque su ${EXT_DESTINO^^} ya existe: $OMITIDOS"
     exit 0
 fi
 
@@ -74,10 +93,11 @@ trap 'rm -rf -- "$TEMPORAL"' EXIT
 explicar_error() {
     local registro="$1" detalle
     detalle="$(grep -Eiv '^(ffmpeg version|  built with|  configuration:|  lib[a-z]+)' "$registro" | tail -n 4 | tr '\n' ' ' | sed 's/[[:space:]]\+/ /g')"
-    if grep -qiE 'invalid data|moov atom not found|could not find codec parameters' "$registro"; then printf 'El MP4 parece incompleto o dañado. %s' "$detalle"
-    elif grep -qiE 'permission denied|read-only file system' "$registro"; then printf 'No hay permiso para leer el origen o escribir el MOV. %s' "$detalle"
+    if grep -qiE 'invalid data|moov atom not found|could not find codec parameters' "$registro"; then printf 'El archivo de origen parece incompleto o dañado. %s' "$detalle"
+    elif grep -qiE 'permission denied|read-only file system' "$registro"; then printf 'No hay permiso para leer el origen o escribir la salida. %s' "$detalle"
     elif grep -qiE 'no space left on device' "$registro"; then printf 'No queda espacio libre en el disco de destino. %s' "$detalle"
     elif grep -qiE 'does not contain any stream|matches no streams' "$registro"; then printf 'El archivo no contiene pistas de vídeo o audio utilizables. %s' "$detalle"
+    elif grep -qiE 'not currently supported in container|could not find tag' "$registro"; then printf 'Este vídeo no se puede copiar a %s. Exporta desde DaVinci con un códec compatible; el conversor conserva el vídeo sin recodificar. %s' "${EXT_DESTINO^^}" "$detalle"
     else printf 'FFmpeg no pudo completar la conversión. %s' "${detalle:-Sin detalle adicional.}"; fi
 }
 
@@ -102,8 +122,8 @@ validar_salida() {
     if [[ -n "$audio_origen" ]]; then
         pista="$(ffprobe -v error -select_streams a -show_entries stream=codec_name,sample_rate -of csv=p=0 "$destino")" || return 1
         while IFS= read -r linea; do
-            if [[ "$linea" != 'pcm_s24le,48000' ]]; then
-                echo 'El audio de salida no es PCM de 24 bits a 48 kHz.' >&2; return 1
+            if [[ "$linea" != "$AUDIO_CODEC,48000" ]]; then
+                echo "El audio de salida no tiene el formato esperado: $AUDIO_DESCRIPCION." >&2; return 1
             fi
         done <<< "$pista"
         duraciones_origen="$(ffprobe -v error -select_streams a -show_entries stream=duration -of csv=p=0 "$origen")" || return 1
@@ -123,9 +143,9 @@ validar_salida() {
     trap '[[ -z "$parcial" ]] || rm -f -- "$parcial"' EXIT
     correctos=0; fallidos=0; indice=0; : > "$ERRORES_TXT"; echo 0
     for video in "${PENDIENTES[@]}"; do
-        salida="${video%.*}.mov"
-        if ! parcial="$(mktemp --tmpdir="$(dirname -- "$video")" .conversor-XXXXXXXX.mov)"; then
-            printf '%s\tNo se pudo crear la salida temporal junto al MP4. Comprueba permisos y espacio libre.\n' "$video" >> "$ERRORES_TXT"
+        salida="${video%.*}.$EXT_DESTINO"
+        if ! parcial="$(mktemp --tmpdir="$(dirname -- "$video")" .conversor-XXXXXXXX.$EXT_DESTINO)"; then
+            printf '%s\tNo se pudo crear la salida temporal junto al original. Comprueba permisos y espacio libre.\n' "$video" >> "$ERRORES_TXT"
             ((fallidos += 1)); ((indice += 1)); echo "$((indice * 100 / TOTAL))"
             continue
         fi
@@ -135,8 +155,10 @@ validar_salida() {
         printf '# Procesando %d de %d: %s\n' "$((indice + 1))" "$TOTAL" "$nombre_mostrado"
 
         log_validacion="$TEMPORAL/validacion-$indice.log"
+        opciones_audio=(-c:a "$AUDIO_CODEC" -ar 48000)
+        [[ "$AUDIO_CODEC" != aac ]] || opciones_audio+=(-b:a 256k)
         if ffmpeg -nostdin -y -hide_banner -loglevel error -i "$video" \
-            -map 0:v:0 -map '0:a?' -c:v copy -c:a pcm_s24le -ar 48000 \
+            -map 0:v:0 -map '0:a?' -c:v copy "${opciones_audio[@]}" \
             -map_metadata 0 -movflags +faststart "$parcial" 2>"$log_compat"; then
             printf '# Comprobando vídeo y audio: %s\n' "$nombre_mostrado"
             if validar_salida "$video" "$parcial" 2>"$log_validacion"; then
@@ -144,7 +166,7 @@ validar_salida() {
                 if mv -n -- "$parcial" "$salida" 2>"$log_validacion" && [[ ! -e "$parcial" ]]; then
                     ((correctos += 1))
                 else
-                    printf '%s\tNo se pudo guardar el MOV; puede existir ya o faltar permisos.\n' "$video" >> "$ERRORES_TXT"
+                    printf '%s\tNo se pudo guardar la salida; puede existir ya o faltar permisos.\n' "$video" >> "$ERRORES_TXT"
                     ((fallidos += 1))
                 fi
             else
@@ -170,7 +192,7 @@ fi
 read -r CORRECTOS FALLIDOS < "$RESULTADO"
 resumen="Convertidos: $CORRECTOS\nOmitidos: $OMITIDOS\nFallidos: $FALLIDOS"
 if (( FALLIDOS == 0 )); then
-    zenity --info --title="$TITULO" --width=470 --text="<span foreground='#16803c'><b>● Conversión correcta y verificada</b></span>\n\n$resumen\n\nVídeo intacto. Audio PCM de 24 bits a 48 kHz cuando el original contiene audio. Los omitidos no se han comprobado."
+    zenity --info --title="$TITULO" --width=470 --text="<span foreground='#16803c'><b>● Conversión correcta y verificada</b></span>\n\n$resumen\n\nVídeo intacto. Audio $AUDIO_DESCRIPCION cuando el original contiene audio. Los omitidos no se han comprobado."
 else
     detalle="$(awk -F '\t' '{printf "• %s\n  %s\n", $1, $2}' "$ERRORES_TXT")"
     detalle="$(printf '%s' "$detalle" | sed 's/\&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g')"
