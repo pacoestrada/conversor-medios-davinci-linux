@@ -1,0 +1,72 @@
+name: Comprobar y publicar versión
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'data/**'
+      - 'packaging/**'
+      - 'tests/**'
+      - 'docs/releases/**'
+      - '.github/workflows/release.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  release:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Instalar dependencias de pruebas
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg python3-tk xvfb
+      - name: Comprobar motor y conversiones
+        run: |
+          bash -n src/conversor-medios
+          python3 -m py_compile src/conversor-gui.py
+          bash tests/test_v2.sh
+          bash tests/test_v2_2.sh
+      - name: Comprobar pantalla inicial
+        run: |
+          xvfb-run -a python3 - <<'PY'
+          import importlib.util
+          spec = importlib.util.spec_from_file_location('gui', 'src/conversor-gui.py')
+          gui = importlib.util.module_from_spec(spec)
+          spec.loader.exec_module(gui)
+          def check(window):
+              window.update()
+              calls = []
+              gui.subprocess.Popen = lambda args, env: calls.append(env['CONVERSOR_DIRECCION'])
+              buttons = []
+              def walk(widget):
+                  for child in widget.winfo_children():
+                      if isinstance(child, gui.tk.Button):
+                          buttons.append(child)
+                      walk(child)
+              walk(window)
+              assert len(buttons) == 2
+              buttons[1].invoke()
+              assert calls == ['publicar']
+          gui.tk.Tk.mainloop = check
+          gui.main()
+          PY
+      - name: Construir instalador
+        run: bash packaging/build-deb.sh
+      - name: Publicar release e instalador
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version=$(sed -n 's/^Version: //p' packaging/debian/control)
+          tag="v$version"
+          package="dist/conversor-mp4-mov_${version}_all.deb"
+          sha256sum "$package" > "dist/SHA256SUMS.txt"
+          if gh release view "$tag" >/dev/null 2>&1; then
+            echo "La release $tag ya existe; no se modifica."
+          else
+            gh release create "$tag" "$package" dist/SHA256SUMS.txt \
+              --target "$GITHUB_SHA" \
+              --title "Conversor de medios $version · Compilando Podcast" \
+              --notes-file "docs/releases/$tag.md"
+          fi
