@@ -1,13 +1,18 @@
-# Conversor MP4 a MOV para Linux
+# Conversor de medios para Linux · Compilando Podcast
 
-Aplicación gráfica para convertir archivos MP4 a MOV de forma sencilla y sin
-perder calidad.
+Aplicación gráfica con dos modos: **MP4 → MOV con PCM** para editar en
+DaVinci Resolve y **MOV → MP4 con AAC** para publicar. En ambos modos conserva
+el vídeo sin recodificar; la conversión del audio a AAC es con pérdida.
+
+La pantalla inicial muestra el logo de Compilando Podcast y distingue con
+azul la edición y con violeta la publicación.
 
 Permite seleccionar uno o varios archivos, o una carpeta completa con sus
 subcarpetas. Copia el vídeo sin recodificar y convierte todas las pistas de audio
 a PCM de 24 bits a 48 kHz, compatible con DaVinci Resolve en Linux.
+En el sentido inverso convierte todas las pistas a AAC a 256 kb/s y 48 kHz.
 
-Antes de anunciar éxito, comprueba las pistas, los canales y el formato PCM,
+Antes de anunciar éxito, comprueba las pistas, los canales y el formato PCM o AAC,
 lee todo el audio para detectar errores y compara la huella del vídeo comprimido
 con el original. Una señal verde indica conversión verificada; una señal roja
 indica fallos y muestra el motivo. Si el origen no tiene audio, no lo inventa.
@@ -23,7 +28,7 @@ Descarga la última versión desde la página de
 
 El archivo que necesitas es:
 
-`conversor-mp4-mov_2.1.0_all.deb`
+`conversor-mp4-mov_2.2.0_all.deb`
 
 ### Instalación gráfica
 
@@ -34,27 +39,29 @@ Haz doble clic sobre el archivo `.deb` descargado y pulsa **Instalar**.
 Abre una terminal en la carpeta donde lo has descargado y ejecuta:
 
 ```bash
-sudo apt install ./conversor-mp4-mov_2.1.0_all.deb
+sudo apt install ./conversor-mp4-mov_2.2.0_all.deb
 ```
 
 El instalador añadirá automáticamente las dependencias necesarias.
 
 ## Cómo usarlo
 
-1. Abre **Conversor MP4 a MOV** desde el menú de aplicaciones.
-2. Elige si quieres seleccionar una carpeta o uno o varios archivos MP4.
-3. Confirma la selección y espera a que finalice el proceso.
-4. Revisa el resumen de archivos convertidos, omitidos y fallidos.
+1. Abre **Conversor de medios · Compilando** desde el menú de aplicaciones.
+2. Elige **Para editar** o **Para publicar**.
+3. Selecciona una carpeta o uno o varios archivos.
+4. Espera y revisa el resumen de archivos convertidos, omitidos y fallidos.
 
-Los archivos MOV se guardan junto a sus MP4 originales. Si un MOV ya existe, la
-aplicación lo omite y no lo sobrescribe. Los omitidos no se validan.
+Los archivos se guardan junto a sus originales, con la extensión del destino.
+Si el archivo de destino ya existe, la aplicación lo omite y no lo sobrescribe. Los omitidos no se validan.
 Para repetir un MP4 convertido con la versión anterior, mueve o renombra su MOV
 antiguo antes de convertir; así se conserva la copia anterior.
 
 ## Funciones principales
 
 - Selección gráfica de archivos o carpetas completas.
-- Búsqueda de MP4 en todas las subcarpetas.
+- Búsqueda de MP4 o MOV en todas las subcarpetas.
+- MOV a MP4 con AAC a 256 kb/s.
+- Pantalla inicial con colores y logo de Compilando Podcast.
 - Audio PCM de 24 bits a 48 kHz en todos los archivos con audio.
 - Vídeo siempre intacto, incluso cuando el audio necesita conversión.
 - Indicador gráfico de progreso.
@@ -64,10 +71,18 @@ antiguo antes de convertir; así se conserva la copia anterior.
 - Eliminación automática de salidas incompletas.
 - Icono y lanzador integrados en el menú de aplicaciones.
 
+## Vídeo compatible con MP4
+
+Este modo no convierte el vídeo a H.264: copia el que contenga el MOV.
+H.264 es la opción habitual para difusión. Si DaVinci exportó ProRes o DNxHR
+y FFmpeg no puede copiarlos a MP4, la aplicación informa del fallo y elimina
+la salida temporal. Exporta desde DaVinci con vídeo compatible con MP4 para
+usar este modo. No se recodifica el vídeo automáticamente.
+
 ## Requisitos
 
 - Debian, Ubuntu, Linux Mint o una distribución compatible con paquetes `.deb`.
-- FFmpeg y Zenity, instalados automáticamente como dependencias.
+- FFmpeg, Zenity, Python 3 y Tkinter, instalados como dependencias.
 
 ## Desinstalar
 
@@ -87,6 +102,7 @@ Ejecutar las pruebas automáticas:
 
 ```bash
 bash tests/test_v2.sh
+bash tests/test_v2_2.sh
 ```
 
 La estructura para un futuro paquete RPM está preparada en `packaging/rpm/`.
@@ -96,6 +112,19 @@ La estructura para un futuro paquete RPM está preparada en `packaging/rpm/`.
 La documentación y las descargas de la antigua versión 1.3 siguen disponibles
 en la [release v1.3](https://github.com/pacoestrada/conversor-medios-davinci-linux/releases/tag/v1.3).
 
+Para ejecutar la pantalla inicial desde el código: `python3 src/conversor-gui.py`.
+El script `convertir_medios.sh` mantiene un acceso alternativo con Zenity.
+
 ## Licencia
 
 Distribuido bajo la licencia MIT.
+
+El logo de Compilando Podcast pertenece a su titular; véase `data/LOGO.md`.
+
+## Publicación de versiones
+
+GitHub Actions comprueba el motor, ambas conversiones y la pantalla inicial,
+construye el `.deb` y crea la release correspondiente a la versión del paquete.
+Incluye el instalador y `SHA256SUMS.txt`; GitHub añade los archivos de código fuente.
+Las notas de la versión están en `docs/releases/v2.2.0.md`.
+Una release existente no se sobrescribe.
