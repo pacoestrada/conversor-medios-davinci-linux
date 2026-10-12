@@ -1,7 +1,7 @@
 [Desktop Entry]
 Type=Application
-Name=Conversor MP4 a MOV
-Comment=Convierte vídeos MP4 a MOV sin pérdida cuando es posible
+Name=Conversor de medios · Compilando
+Comment=MP4 a MOV con PCM y MOV a MP4 con AAC; vídeo sin recodificar
 Exec=conversor-medios
 Icon=com.pacoestrada.ConversorMp4Mov
 Terminal=false
