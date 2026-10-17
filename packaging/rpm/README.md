@@ -1,5 +1,10 @@
 # Empaquetado RPM
 
-La aplicación mantiene una separación estándar entre ejecutable, lanzador e icono.
-Esta carpeta queda reservada para añadir el archivo `.spec` después de validar la
-versión Debian. La fuente instalable es `src/conversor-medios`.
+Construye el paquete para Fedora, RHEL, Rocky Linux, AlmaLinux, openSUSE y
+otras distribuciones compatibles:
+
+```bash
+bash packaging/build-rpm.sh
+```
+
+Requiere `rpmbuild`. El resultado se guarda en `dist/`.
