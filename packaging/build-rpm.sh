@@ -2,37 +2,27 @@
 set -euo pipefail
 
 RAIZ="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)"
-VERSION="${VERSION:-2.1.0}"
-NOMBRE="conversor-mp4-mov-$VERSION"
+VERSION="${VERSION:-2.3.0}"
+TOPDIR="$(mktemp -d)"
+trap 'rm -rf -- "$TOPDIR"' EXIT
 
-if ! command -v rpmbuild >/dev/null 2>&1; then
-    printf 'No se encuentra rpmbuild. Instala las herramientas de construcción RPM.\n' >&2
-    exit 1
-fi
-
-TEMPORAL="$(mktemp -d)"
-trap 'rm -rf -- "$TEMPORAL"' EXIT
-mkdir -p "$TEMPORAL"/{BUILD,BUILDROOT,RPMS,SOURCES,SPECS,SRPMS,tmp,rpmdb} "$TEMPORAL/$NOMBRE"
-
-install -Dm755 "$RAIZ/src/conversor-medios" "$TEMPORAL/$NOMBRE/src/conversor-medios"
-install -Dm644 "$RAIZ/data/com.pacoestrada.ConversorMp4Mov.desktop" \
-    "$TEMPORAL/$NOMBRE/data/com.pacoestrada.ConversorMp4Mov.desktop"
-for tamano in 48 64 128 256 512; do
-    install -Dm644 \
-        "$RAIZ/data/icons/${tamano}x${tamano}/com.pacoestrada.ConversorMp4Mov.png" \
-        "$TEMPORAL/$NOMBRE/data/icons/${tamano}x${tamano}/com.pacoestrada.ConversorMp4Mov.png"
+for directorio in BUILD BUILDROOT RPMS SOURCES SPECS SRPMS tmp rpmdb; do
+    mkdir -p -- "$TOPDIR/$directorio"
 done
-install -Dm644 "$RAIZ/LICENSE" "$TEMPORAL/$NOMBRE/LICENSE"
 
-tar -C "$TEMPORAL" -czf "$TEMPORAL/SOURCES/$NOMBRE.tar.gz" "$NOMBRE"
+FUENTE="conversor-mp4-mov-$VERSION"
+tar --exclude='./build' --exclude='./dist' --exclude='./.git' \
+    --transform="s,^\.,$FUENTE," \
+    -czf "$TOPDIR/SOURCES/$FUENTE.tar.gz" -C "$RAIZ" .
+
 sed "s/^Version:.*/Version:        $VERSION/" \
-    "$RAIZ/packaging/rpm/conversor-mp4-mov.spec" > "$TEMPORAL/SPECS/conversor-mp4-mov.spec"
+    "$RAIZ/packaging/rpm/conversor-mp4-mov.spec" > "$TOPDIR/SPECS/conversor-mp4-mov.spec"
 
-rpmbuild \
-    --define "_topdir $TEMPORAL" \
-    --define "_tmppath $TEMPORAL/tmp" \
-    --define "_dbpath $TEMPORAL/rpmdb" \
-    -ba "$TEMPORAL/SPECS/conversor-mp4-mov.spec"
-mkdir -p "$RAIZ/dist"
-find "$TEMPORAL/RPMS" -type f -name '*.rpm' -exec install -m644 {} "$RAIZ/dist/" \;
-printf 'Paquete RPM creado en: %s/dist\n' "$RAIZ"
+rpmbuild -ba "$TOPDIR/SPECS/conversor-mp4-mov.spec" \
+    --define "_topdir $TOPDIR" \
+    --define "_tmppath $TOPDIR/tmp" \
+    --define "_dbpath $TOPDIR/rpmdb"
+
+mkdir -p -- "$RAIZ/dist"
+find "$TOPDIR/RPMS" -type f -name '*.rpm' -exec cp -f -- {} "$RAIZ/dist/" \;
+printf 'Paquete RPM creado en: %s\n' "$RAIZ/dist"
