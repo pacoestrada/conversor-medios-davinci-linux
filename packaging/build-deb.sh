@@ -2,13 +2,14 @@
 set -euo pipefail
 
 RAIZ="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)"
-VERSION="${VERSION:-2.1.0}"
+VERSION="${VERSION:-2.3.0}"
 ARQUITECTURA="all"
 NOMBRE="conversor-mp4-mov_${VERSION}_${ARQUITECTURA}"
 CONSTRUCCION="$RAIZ/build/$NOMBRE"
 
 rm -rf -- "$CONSTRUCCION"
-install -Dm755 "$RAIZ/src/conversor-medios" "$CONSTRUCCION/usr/bin/conversor-medios"
+install -Dm755 "$RAIZ/src/conversor-gui.py" "$CONSTRUCCION/usr/bin/conversor-medios"
+install -Dm755 "$RAIZ/src/conversor-medios" "$CONSTRUCCION/usr/lib/conversor-medios/conversor-medios"
 install -Dm644 "$RAIZ/data/com.pacoestrada.ConversorMp4Mov.desktop" "$CONSTRUCCION/usr/share/applications/com.pacoestrada.ConversorMp4Mov.desktop"
 
 for tamano in 48 64 128 256 512; do
