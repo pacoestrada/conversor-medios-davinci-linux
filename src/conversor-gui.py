@@ -15,7 +15,7 @@ LOGO = (Path('/usr/share/icons/hicolor/128x128/apps/com.pacoestrada.ConversorMp4
 
 def main():
     window = tk.Tk()
-    window.title('Conversor de medios · Compilando Podcast · 2.2.0')
+    window.title('Conversor de medios · Compilando Podcast · 2.3.0')
     window.configure(bg='#f1f5f9')
     window.geometry('780x520')
     window.minsize(740, 520)
