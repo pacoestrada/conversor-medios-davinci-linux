@@ -1,11 +1,14 @@
-# Conversor de medios para Linux · Compilando Podcast
+# Conversor de medios para Linux
 
 Aplicación gráfica con dos modos: **MP4 → MOV con PCM** para editar en
 DaVinci Resolve y **MOV → MP4 con AAC** para publicar. En ambos modos conserva
 el vídeo sin recodificar; la conversión del audio a AAC es con pérdida.
 
 La pantalla inicial muestra el icono oficial firmado **«by Paco Estrada»** y
-distingue con azul la edición y con violeta la publicación.
+distingue con azul la edición y con violeta la publicación. La ventana arranca
+centrada, hasta 1100 × 750 píxeles según el área disponible. Los textos se ajustan
+y las tarjetas pasan a una columna cuando falta anchura; en ventanas muy pequeñas
+se puede desplazar el contenido verticalmente.
 
 Permite seleccionar uno o varios archivos, o una carpeta completa con sus
 subcarpetas. Copia el vídeo sin recodificar y convierte todas las pistas de audio
@@ -28,9 +31,9 @@ Descarga la última versión desde la página de
 
 El archivo que necesitas es:
 
-- Debian, Ubuntu o Linux Mint: `conversor-mp4-mov_2.3.0_all.deb`
+- Debian, Ubuntu o Linux Mint: `conversor-mp4-mov_2.3.1_all.deb`
 - Fedora, Rocky Linux, AlmaLinux o RHEL:
-  `conversor-mp4-mov-2.3.0-1.noarch.rpm`
+  `conversor-mp4-mov-2.3.1-1.noarch.rpm`
 
 ### Instalación gráfica
 
@@ -41,13 +44,13 @@ Haz doble clic sobre el archivo `.deb` descargado y pulsa **Instalar**.
 Abre una terminal en la carpeta donde lo has descargado y ejecuta:
 
 ```bash
-sudo apt install ./conversor-mp4-mov_2.3.0_all.deb
+sudo apt install ./conversor-mp4-mov_2.3.1_all.deb
 ```
 
 En Fedora, Rocky Linux, AlmaLinux o RHEL:
 
 ```bash
-sudo dnf install ./conversor-mp4-mov-2.3.0-1.noarch.rpm
+sudo dnf install ./conversor-mp4-mov-2.3.1-1.noarch.rpm
 ```
 
 El instalador añadirá automáticamente las dependencias necesarias.
@@ -69,7 +72,7 @@ antiguo antes de convertir; así se conserva la copia anterior.
 - Selección gráfica de archivos o carpetas completas.
 - Búsqueda de MP4 o MOV en todas las subcarpetas.
 - MOV a MP4 con AAC a 256 kb/s.
-- Pantalla inicial con colores y logo de Compilando Podcast.
+- Pantalla inicial adaptable, con el icono propio y tarjetas que se reorganizan en vertical.
 - Audio PCM de 24 bits a 48 kHz en todos los archivos con audio.
 - Vídeo siempre intacto, incluso cuando el audio necesita conversión.
 - Indicador gráfico de progreso.
@@ -112,6 +115,7 @@ Ejecutar las pruebas automáticas:
 ```bash
 bash tests/test_v2.sh
 bash tests/test_v2_2.sh
+xvfb-run -a -s "-screen 0 1366x768x24" python3 tests/test_gui.py
 ```
 
 Construir el paquete RPM:
@@ -139,5 +143,6 @@ El logo de Compilando Podcast pertenece a su titular; véase `data/LOGO.md`.
 GitHub Actions comprueba el motor, ambas conversiones y la pantalla inicial,
 construye el `.deb` y crea la release correspondiente a la versión del paquete.
 Incluye el instalador y `SHA256SUMS.txt`; GitHub añade los archivos de código fuente.
-Las notas de esta versión están en `docs/releases/v2.3.0.md`.
-Una release existente no se sobrescribe.
+Las notas de esta versión están en `docs/releases/v2.3.1.md`.
+Una release existente no se sobrescribe. El RPM se construye con
+`packaging/build-rpm.sh` y se añade a la misma release junto a las sumas actualizadas.

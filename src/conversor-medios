@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -u
 readonly TITULO="Conversor de medios · Compilando"
-readonly VERSION="2.3.0"
+readonly VERSION="2.3.1"
 
 mostrar_sin_gui() {
     local mensaje="$1"
