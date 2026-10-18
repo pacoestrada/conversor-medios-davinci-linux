@@ -26,25 +26,58 @@ y del hardware. Esta versión no recodifica vídeo automáticamente.
 
 ## Así es el conversor
 
-### Elige qué quieres preparar
+Guía visual con capturas reales de la **versión 2.3.6 en GNOME**.
+El ejemplo muestra el recorrido **MP4 → MOV** para preparar vídeos para edición.
 
-![Pantalla principal del Conversor de medios 2.3.5 con los modos Para editar y Para publicar](conversor-2.3.5.png)
+### 1. Elige qué quieres preparar
 
-- **Para editar (azul):** prepara MP4 como MOV con audio PCM de 24 bits a 48 kHz para trabajar en DaVinci Resolve en Linux.
-- **Para publicar (violeta):** convierte MOV compatibles a MP4 con audio AAC de 256 kb/s a 48 kHz.
+![Pantalla principal del conversor 2.3.6: Para editar y Para publicar](conversor-2.3.6-inicio.png)
 
-En ambos modos se copia el vídeo sin recodificar. Pulsa **Seleccionar vídeos**,
-elige archivos o una carpeta y revisa el resumen al terminar. Los originales se conservan.
+- **Para editar (azul):** MP4 → MOV, con audio PCM de 24 bits a 48 kHz.
+- **Para publicar (violeta):** MOV compatible → MP4, con audio AAC a 256 kb/s y 48 kHz.
 
-### También se adapta a ventanas más pequeñas
+En ambos modos se copia el vídeo sin recodificar. Pulsa **Seleccionar vídeos**
+en la tarjeta del modo que necesites.
 
-![Conversor de medios 2.3.5 en una ventana de 620 píxeles de ancho, con la cabecera reorganizada](conversor-compacto-2.3.5.png)
+### 2. Elige una carpeta o archivos sueltos
 
-La cabecera se reorganiza y, cuando hace falta, las tarjetas pasan a una columna.
-El desplazamiento vertical permite acceder al contenido si no cabe en la ventana.
+![Selección de una carpeta completa o uno o varios archivos MP4](conversor-2.3.6-seleccion.png)
 
-*Capturas reales de la interfaz 2.3.5 tomadas durante las pruebas en un escritorio virtual Linux.
-El aspecto de los bordes de ventana puede variar según el escritorio.*
+Selecciona **Una carpeta (incluye subcarpetas)** para procesar un conjunto completo,
+o **Uno o varios archivos MP4** para escoger vídeos concretos. Pulsa **Aceptar**
+y elige los archivos o la carpeta en el selector que se abre a continuación.
+En el modo Para publicar, el selector busca archivos MOV.
+
+### 3. Espera mientras convierte y comprueba
+
+![Ventana de progreso comprobando el vídeo y el audio de un archivo](conversor-2.3.6-comprobacion.png)
+
+El conversor indica el archivo que está procesando. Después de convertir el audio,
+comprueba las pistas y compara el contenido del vídeo con el original.
+La captura muestra esa fase de comprobación. El porcentaje avanza por archivos
+completados del lote; con vídeos pequeños esta ventana puede cerrarse enseguida.
+
+### 4. Revisa el resultado
+
+![Conversión correcta y verificada: un archivo convertido, ninguno omitido ni fallido](conversor-2.3.6-resultado.png)
+
+La señal verde **Conversión correcta y verificada** confirma que han pasado las
+comprobaciones. El resumen distingue archivos **convertidos**, **omitidos** y
+**fallidos**. En este ejemplo se ha convertido un vídeo sin errores.
+
+El MOV se guarda junto al MP4 original, que se conserva. En el modo Para publicar,
+la salida es un MP4. Si se produce un fallo, la aplicación muestra el motivo.
+
+### ¿Qué ocurre si el archivo de destino ya existe?
+
+![Aviso: no hay nada pendiente porque el MOV de destino ya existe](conversor-2.3.6-omitidos.png)
+
+El conversor **no sobrescribe el archivo de destino**: lo omite. Si todos los
+archivos seleccionados tienen ya su salida, muestra **No hay nada pendiente**.
+Esto no es un error de conversión. Los archivos omitidos no se comprueban de nuevo.
+
+Si quieres repetir una conversión, mueve o renombra primero el archivo de destino
+para conservar la copia anterior y vuelve a seleccionar el original.
 
 ## Descargar e instalar
 
