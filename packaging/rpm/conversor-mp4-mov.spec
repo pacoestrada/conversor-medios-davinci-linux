@@ -1,5 +1,5 @@
 Name:           conversor-mp4-mov
-Version:        2.3.5
+Version:        2.3.6
 Release:        1%{?dist}
 Summary:        Conversor gráfico bidireccional MP4 y MOV
 License:        MIT
@@ -39,6 +39,9 @@ done
 %{_datadir}/icons/hicolor/*/apps/com.pacoestrada.ConversorMp4Mov.png
 
 %changelog
+* Sun Oct 18 2026 Paco Estrada - 2.3.6-1
+- Corrige la versión mostrada en los diálogos del conversor.
+
 * Sun Oct 18 2026 Paco Estrada - 2.3.5-1
 - Ventana inicial adaptable y cabecera neutra.
 

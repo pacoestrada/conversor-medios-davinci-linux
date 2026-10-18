@@ -53,9 +53,9 @@ Descarga la última versión desde la página de
 
 El archivo que necesitas es:
 
-- Debian, Ubuntu o Linux Mint: `conversor-mp4-mov_2.3.5_all.deb`
+- Debian, Ubuntu o Linux Mint: `conversor-mp4-mov_2.3.6_all.deb`
 - Fedora, Rocky Linux, AlmaLinux o RHEL:
-  `conversor-mp4-mov-2.3.5-1.noarch.rpm`
+  `conversor-mp4-mov-2.3.6-1.noarch.rpm`
 
 ### Instalación gráfica
 
@@ -66,13 +66,13 @@ Haz doble clic sobre el archivo `.deb` descargado y pulsa **Instalar**.
 Abre una terminal en la carpeta donde lo has descargado y ejecuta:
 
 ```bash
-sudo apt install ./conversor-mp4-mov_2.3.5_all.deb
+sudo apt install ./conversor-mp4-mov_2.3.6_all.deb
 ```
 
 En Fedora, Rocky Linux, AlmaLinux o RHEL:
 
 ```bash
-sudo dnf install ./conversor-mp4-mov-2.3.5-1.noarch.rpm
+sudo dnf install ./conversor-mp4-mov-2.3.6-1.noarch.rpm
 ```
 
 El instalador añadirá automáticamente las dependencias necesarias.
@@ -165,5 +165,5 @@ El logo de Compilando Podcast pertenece a su titular; véase `data/LOGO.md`.
 GitHub Actions comprueba el motor, ambas conversiones y la pantalla inicial,
 construye el `.deb` y el `.rpm` y crea la release correspondiente a la versión del paquete.
 Incluye el instalador y `SHA256SUMS.txt`; GitHub añade los archivos de código fuente.
-Las notas de esta versión están en `docs/releases/v2.3.5.md`.
+Las notas de esta versión están en `docs/releases/v2.3.6.md`.
 Una release existente no se sobrescribe. Ambos paquetes se publican juntos con sus sumas SHA256.

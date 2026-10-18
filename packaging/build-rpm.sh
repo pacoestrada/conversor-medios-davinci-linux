@@ -2,7 +2,7 @@
 set -euo pipefail
 
 RAIZ="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)"
-VERSION="${VERSION:-2.3.5}"
+VERSION="${VERSION:-2.3.6}"
 TOPDIR="$(mktemp -d)"
 trap 'rm -rf -- "$TOPDIR"' EXIT
 
