@@ -6,7 +6,7 @@ el vídeo sin recodificar; la conversión del audio a AAC es con pérdida.
 
 La pantalla inicial muestra el icono oficial firmado **«by Paco Estrada»** y
 distingue con azul la edición y con violeta la publicación. La ventana arranca
-centrada, hasta 1100 × 750 píxeles según el área disponible. Los textos se ajustan
+centrada en el monitor del puntero, hasta 1100 × 750 unidades de diseño según el área disponible y el escalado HiDPI. Los textos se ajustan
 y las tarjetas pasan a una columna cuando falta anchura; en ventanas muy pequeñas
 se puede desplazar el contenido verticalmente.
 
@@ -31,9 +31,9 @@ Descarga la última versión desde la página de
 
 El archivo que necesitas es:
 
-- Debian, Ubuntu o Linux Mint: `conversor-mp4-mov_2.3.1_all.deb`
+- Debian, Ubuntu o Linux Mint: `conversor-mp4-mov_2.3.5_all.deb`
 - Fedora, Rocky Linux, AlmaLinux o RHEL:
-  `conversor-mp4-mov-2.3.1-1.noarch.rpm`
+  `conversor-mp4-mov-2.3.5-1.noarch.rpm`
 
 ### Instalación gráfica
 
@@ -44,13 +44,13 @@ Haz doble clic sobre el archivo `.deb` descargado y pulsa **Instalar**.
 Abre una terminal en la carpeta donde lo has descargado y ejecuta:
 
 ```bash
-sudo apt install ./conversor-mp4-mov_2.3.1_all.deb
+sudo apt install ./conversor-mp4-mov_2.3.5_all.deb
 ```
 
 En Fedora, Rocky Linux, AlmaLinux o RHEL:
 
 ```bash
-sudo dnf install ./conversor-mp4-mov-2.3.1-1.noarch.rpm
+sudo dnf install ./conversor-mp4-mov-2.3.5-1.noarch.rpm
 ```
 
 El instalador añadirá automáticamente las dependencias necesarias.
@@ -141,8 +141,7 @@ El logo de Compilando Podcast pertenece a su titular; véase `data/LOGO.md`.
 ## Publicación de versiones
 
 GitHub Actions comprueba el motor, ambas conversiones y la pantalla inicial,
-construye el `.deb` y crea la release correspondiente a la versión del paquete.
+construye el `.deb` y el `.rpm` y crea la release correspondiente a la versión del paquete.
 Incluye el instalador y `SHA256SUMS.txt`; GitHub añade los archivos de código fuente.
-Las notas de esta versión están en `docs/releases/v2.3.1.md`.
-Una release existente no se sobrescribe. El RPM se construye con
-`packaging/build-rpm.sh` y se añade a la misma release junto a las sumas actualizadas.
+Las notas de esta versión están en `docs/releases/v2.3.5.md`.
+Una release existente no se sobrescribe. Ambos paquetes se publican juntos con sus sumas SHA256.

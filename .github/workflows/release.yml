@@ -21,39 +21,23 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Instalar dependencias de pruebas
-        run: sudo apt-get update && sudo apt-get install -y ffmpeg python3-tk xvfb
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg python3-tk xvfb x11-xserver-utils rpm
       - name: Comprobar motor y conversiones
         run: |
           bash -n src/conversor-medios
           python3 -m py_compile src/conversor-gui.py
           bash tests/test_v2.sh
           bash tests/test_v2_2.sh
-      - name: Comprobar pantalla inicial
+      - name: Comprobar monitores e interfaz HiDPI
         run: |
-          xvfb-run -a python3 - <<'PY'
-          import importlib.util
-          spec = importlib.util.spec_from_file_location('gui', 'src/conversor-gui.py')
-          gui = importlib.util.module_from_spec(spec)
-          spec.loader.exec_module(gui)
-          def check(window):
-              window.update()
-              calls = []
-              gui.subprocess.Popen = lambda args, env: calls.append(env['CONVERSOR_DIRECCION'])
-              buttons = []
-              def walk(widget):
-                  for child in widget.winfo_children():
-                      if isinstance(child, gui.tk.Button):
-                          buttons.append(child)
-                      walk(child)
-              walk(window)
-              assert len(buttons) == 2
-              buttons[1].invoke()
-              assert calls == ['publicar']
-          gui.tk.Tk.mainloop = check
-          gui.main()
-          PY
-      - name: Construir instalador
-        run: bash packaging/build-deb.sh
+          python3 tests/test_monitor_area.py
+          xvfb-run -a -s "-screen 0 1366x768x24 -dpi 96" python3 tests/test_gui.py
+          xvfb-run -a -s "-screen 0 1920x1080x24 -dpi 96" python3 tests/test_gui.py
+          TEST_SCALE=2.666666667 TEST_DESKTOP_FONT=72 xvfb-run -a -s "-screen 0 3840x2160x24 -dpi 192" python3 tests/test_gui.py
+      - name: Construir instaladores
+        run: |
+          bash packaging/build-deb.sh
+          bash packaging/build-rpm.sh
       - name: Publicar release e instalador
         env:
           GH_TOKEN: ${{ github.token }}
@@ -61,12 +45,13 @@ jobs:
           version=$(sed -n 's/^Version: //p' packaging/debian/control)
           tag="v$version"
           package="dist/conversor-mp4-mov_${version}_all.deb"
-          sha256sum "$package" > "dist/SHA256SUMS.txt"
+          rpm_package="dist/conversor-mp4-mov-${version}-1.noarch.rpm"
+          (cd dist && sha256sum "$(basename "$package")" "$(basename "$rpm_package")") > "dist/SHA256SUMS.txt"
           if gh release view "$tag" >/dev/null 2>&1; then
             echo "La release $tag ya existe; no se modifica."
           else
-            gh release create "$tag" "$package" dist/SHA256SUMS.txt \
+            gh release create "$tag" "$package" "$rpm_package" dist/SHA256SUMS.txt \
               --target "$GITHUB_SHA" \
-              --title "Conversor de medios $version · Compilando Podcast" \
+              --title "Conversor de medios $version" \
               --notes-file "docs/releases/$tag.md"
           fi

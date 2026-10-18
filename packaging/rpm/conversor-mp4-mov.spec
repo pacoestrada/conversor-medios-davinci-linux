@@ -1,5 +1,5 @@
 Name:           conversor-mp4-mov
-Version:        2.3.1
+Version:        2.3.5
 Release:        1%{?dist}
 Summary:        Conversor gráfico bidireccional MP4 y MOV
 License:        MIT
@@ -11,6 +11,7 @@ Requires:       ffmpeg
 Requires:       zenity
 Requires:       python3
 Requires:       python3-tkinter
+Requires:       xrandr
 
 %description
 Aplicación gráfica que convierte MP4 a MOV con PCM y MOV a MP4 con AAC,
@@ -38,7 +39,7 @@ done
 %{_datadir}/icons/hicolor/*/apps/com.pacoestrada.ConversorMp4Mov.png
 
 %changelog
-* Sun Oct 18 2026 Paco Estrada - 2.3.1-1
+* Sun Oct 18 2026 Paco Estrada - 2.3.5-1
 - Ventana inicial adaptable y cabecera neutra.
 
 * Sat Oct 17 2026 Paco Estrada - 2.3.0-1

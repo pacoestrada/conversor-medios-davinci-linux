@@ -3,6 +3,7 @@ import importlib.util
 import os
 from pathlib import Path
 import tkinter as tk
+from tkinter import font as tkfont
 
 root = Path(__file__).resolve().parent.parent
 spec = importlib.util.spec_from_file_location('gui', root / 'src/conversor-gui.py')
@@ -18,6 +19,13 @@ def walk(widget):
 
 def check(window):
     window.update()
+    # A resolved desktop font must not multiply the explicit design size.
+    title = next(w for w in walk(window) if isinstance(w, tk.Label)
+                 and w.cget('text') == 'Conversor de medios')
+    title_font = tkfont.Font(root=window, font=title.cget('font'))
+    scale = float(window.tk.call('tk', 'scaling')) / (96 / 72)
+    # 24pt title enlarged 15%: allow font ascent/descent, reject runaway sizes.
+    assert 32 * scale <= title_font.metrics('linespace') <= 56 * scale
     sw, sh = window.winfo_screenwidth(), window.winfo_screenheight()
     assert window.winfo_width() <= sw
     assert window.winfo_height() <= sh
@@ -59,6 +67,8 @@ if os.environ.get('TEST_SCALE'):
     def init(self, *args, **kwargs):
         original(self, *args, **kwargs)
         self.tk.call('tk', 'scaling', float(os.environ['TEST_SCALE']))
+        if os.environ.get('TEST_DESKTOP_FONT'):
+            tkfont.nametofont('TkDefaultFont').configure(size=int(os.environ['TEST_DESKTOP_FONT']))
     tk.Tk.__init__ = init
 # Test desktop panels without needing a specific window manager.
 if os.environ.get('TEST_WORKAREA'):

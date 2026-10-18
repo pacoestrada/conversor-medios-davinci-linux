@@ -2,7 +2,7 @@
 set -euo pipefail
 
 RAIZ="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)"
-VERSION="${VERSION:-2.3.1}"
+VERSION="${VERSION:-2.3.5}"
 ARQUITECTURA="all"
 NOMBRE="conversor-mp4-mov_${VERSION}_${ARQUITECTURA}"
 CONSTRUCCION="$RAIZ/build/$NOMBRE"
