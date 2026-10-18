@@ -59,7 +59,7 @@ def available_area(window):
 
 def main():
     window = tk.Tk()
-    window.title('Conversor de medios · 2.3.5')
+    window.title('Conversor de medios · 2.3.6')
     # Tk's coordinates and EWMH work area share the X11/XWayland coordinate
     # space. Convert design units to that space ONCE, using Tk's effective DPI.
     # Do not multiply by GDK_SCALE: XWayland may already apply compositor scaling.
