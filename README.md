@@ -24,6 +24,28 @@ La señal verde confirma estas comprobaciones; no sustituye una prueba en Resolv
 El vídeo HEVC/H.264 se conserva: su importación depende de la edición de Resolve
 y del hardware. Esta versión no recodifica vídeo automáticamente.
 
+## Así es el conversor
+
+### Elige qué quieres preparar
+
+![Pantalla principal del Conversor de medios 2.3.5 con los modos Para editar y Para publicar](conversor-2.3.5.png)
+
+- **Para editar (azul):** prepara MP4 como MOV con audio PCM de 24 bits a 48 kHz para trabajar en DaVinci Resolve en Linux.
+- **Para publicar (violeta):** convierte MOV compatibles a MP4 con audio AAC de 256 kb/s a 48 kHz.
+
+En ambos modos se copia el vídeo sin recodificar. Pulsa **Seleccionar vídeos**,
+elige archivos o una carpeta y revisa el resumen al terminar. Los originales se conservan.
+
+### También se adapta a ventanas más pequeñas
+
+![Conversor de medios 2.3.5 en una ventana de 620 píxeles de ancho, con la cabecera reorganizada](conversor-compacto-2.3.5.png)
+
+La cabecera se reorganiza y, cuando hace falta, las tarjetas pasan a una columna.
+El desplazamiento vertical permite acceder al contenido si no cabe en la ventana.
+
+*Capturas reales de la interfaz 2.3.5 tomadas durante las pruebas en un escritorio virtual Linux.
+El aspecto de los bordes de ventana puede variar según el escritorio.*
+
 ## Descargar e instalar
 
 Descarga la última versión desde la página de
